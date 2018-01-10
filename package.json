@@ -1,0 +1,19 @@
+{
+  "name": "page-reindexer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "clayutils": "^1.0.0",
+    "elasticsearch": "^14.0.0",
+    "highland": "^2.11.1",
+    "lodash": "^4.17.4",
+    "node-fetch": "^1.7.3",
+    "yargs": "^10.1.1"
+  }
+}

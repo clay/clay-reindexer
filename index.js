@@ -1,6 +1,4 @@
 const {logResult, streamPageUris} = require('./lib/util'),
-  {getPageInstance} = require('clayutils'),
-  getSite = require('./lib/get-site'),
   docTransforms = require('./lib/doc-transforms'),
   h = require('highland'),
   args = require('yargs').argv,

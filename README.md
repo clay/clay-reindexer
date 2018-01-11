@@ -11,6 +11,14 @@ The following command populates the local `zar` index with the pages inside the 
 node index.js --site http://foo.bar --elasticHost http://localhost:9200 --handlers myhandlers --elasticIndex zar
 ```
 
+## Installation
+
+```
+git clone https://github.com/nymag/page-reindexer
+cd page-reindexer
+npm install
+```
+
 ## Options
 
 * **site**: String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`

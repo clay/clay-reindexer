@@ -13,10 +13,10 @@ node index.js --site http://foo.bar --elasticHost http://localhost:9200 --handle
 
 ## Options
 
-* **site** String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`
-* **elasticHost** String. Required. URL to Elastic Host root, e.g. `http://localhost:9200`.
-* **elasticIndex** String. Required. Name of index to store new page docs.
-* **handlers** String. Optional. Path to directory containing handlers. See "Handlers" section below.
+* **site**: String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`
+* **elasticHost**: String. Required. URL to Elastic Host root, e.g. `http://localhost:9200`.
+* **elasticIndex**: String. Required. Name of index to store new page docs.
+* **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" section below.
 
 ## Handlers
 

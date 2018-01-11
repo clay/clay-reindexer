@@ -1,15 +1,18 @@
-const {logResult, streamFetchJson, streamSearch} = require('./lib/util'),
+const {logResult, streamFetchJson, streamSearch, streamComponents, streamFetch} = require('./lib/util'),
   {getPageInstance} = require('clayutils'),
   urlUtil = require('url'),
   h = require('highland'),
   args = require('yargs').argv,
+  fs = require('fs'),
   _ = require('lodash'),
+  path = require('path'),
   elasticsearch = require('elasticsearch'),
-  getSiteSlug = getSiteSlugMemoized();
+  getSite = getSiteMemoized();
   client = new elasticsearch.Client({host: args.elasticHost}),
   clayUtils = require('clayutils'),
   errors = require('./lib/errors'),
-  searchElastic = streamSearch.bind(this, client);
+  searchElastic = streamSearch.bind(this, client),
+  handlers = getHandlers();
 
 function validateArgs() {
   if (!args.site) throw new Error('You must specify a prefix');
@@ -17,16 +20,20 @@ function validateArgs() {
 }
 
 function processSite(prefix) {
-  console.log('processing', prefix);
-  return streamFetchJson(`${prefix}/pages`)
-    .flatten()
-    .flatMap(pageUri => processPage(prefix, pageUri))
+  return streamDocs(prefix)
     .tap(h.log)
     .errors((err, push) => {
-      console.log('error!');
-      console.log(err);
+      push(null, {error: err});
     })
     .doto(logResult);
+}
+
+
+function streamDocs(prefix) {
+  return streamFetchJson(`${prefix}/pages`)
+    .flatten()
+    .filter(pageUri => pageUri === 'localhost.thecut.com/pages/cjc6meaub00007u1orw2s7rm2')
+    .flatMap(pageUri => processPage(prefix, pageUri));
 }
 
 function processPage(prefix, pageUri) {
@@ -52,6 +59,75 @@ function processPage(prefix, pageUri) {
     .flatMap(doc => addPublishData(doc, prefix))
     .flatMap(doc => validatePublishUrl(doc, prefix))
     .flatMap(doc => addScheduleTime(doc, prefix))
+    .flatMap(doc => applyHandlersOnDoc(doc, prefix));
+}
+
+/**
+ * Apply all the handlers to the specified doc.
+ * @param  {Object} doc
+ * @param  {string} prefix
+ * @return {Stream} modified doc
+ */
+function applyHandlersOnDoc(doc, prefix) {
+  const composedUrl = getPageUrl(doc, prefix) + '.json';
+
+  return streamFetchJson(composedUrl)
+    .flatMap(streamComponents)
+    .flatMap(cmpt => applyHandlersOnCmpt(cmpt, prefix))
+    .tap(subDoc => _.assign(doc, subDoc))
+    .collect()
+    .map(() => doc);
+}
+
+/**
+ * Apply all handlers
+ * @param  {Object} cmpt cmpt data with _ref
+ * @return {Stream} of subdocs, partial docs to be merged into doc
+ */
+function applyHandlersOnCmpt(cmpt, prefix) {
+  const componentName = clayUtils.getComponentName(cmpt._ref),
+    handler = handlers[componentName];
+
+  if (!handler) return h.of({});
+  return getSite(prefix)
+    .flatMap(site => {
+      const result = handler(cmpt._ref, _.omit(cmpt, '_ref'), site);
+
+      return h.isStream(result) ? result : h.of(result);
+    })
+}
+
+/**
+ * Retrieve all handlers.
+ * @return {Object} mapping of component name to handler fnc
+ */
+function getHandlers() {
+  let dir = args.handlers;
+
+  if (!dir) return {};
+  dir = path.resolve(dir);
+  return fs.readdirSync(dir)
+    .filter(file => _.endsWith(file, '.js'))
+    .reduce((acc, file) => {
+      acc[file.slice(0, -3)] = require(path.join(dir, file));
+      return acc;
+    }, {});
+}
+
+/**
+ * Return the page URL corresponding to a doc with a "uri" property.
+ * @param  {Object} doc Partial pages index doc with a "uri" property
+ * @param  {string} prefix Page instance name is affixed to this prefix.
+ * @param  {string} [version] e.g. "published"
+ * @return {string}
+ * @example
+ * getPageUrl({uri: 'foo.com/pages/bar'}, 'http://zar.com') // http://zar.com/pages/bar
+ */
+function getPageUrl(doc, prefix, version) {
+  let url = `${prefix}/pages/${clayUtils.getPageInstance(doc.uri)}`;
+
+  if (version) url = clayUtils.replaceVersion(url, version);
+  return url;
 }
 
 /**
@@ -61,10 +137,8 @@ function processPage(prefix, pageUri) {
  * @return {Stream}
  */
 function addPublishData(doc, prefix) {
-  const pageUrl = `${prefix}/pages/${clayUtils.getPageInstance(doc.uri)}`,
-    publishedPageUrl = clayUtils.replaceVersion(pageUrl, 'published');
+  const publishedPageUrl = getPageUrl(doc, prefix, 'published');
 
-  console.log('----', publishedPageUrl);
   return streamFetchJson(publishedPageUrl)
     .map(publishedPageData => {
       doc.published = true;
@@ -118,7 +192,7 @@ function validatePublishUrl(doc, prefix) {
   uriUrl = `${prefix}/uris/${encoded}`;
   return streamFetch(uriUrl)
     .map(res => {
-      if (result.status === 404) throw errors.request404;
+      if (res.status === 404) throw errors.request404;
       return res.text();
     })
     .map(text => {
@@ -141,9 +215,9 @@ function validatePublishUrl(doc, prefix) {
  * @param {Stream}
  */
 function addSiteSlug(doc, prefix) {
-  return getSiteSlug(prefix)
-    .map(slug => {
-      doc.siteSlug = slug;
+  return getSite(prefix)
+    .map(site => {
+      doc.siteSlug = site.slug;
       return doc;
     });
 }
@@ -153,7 +227,7 @@ function addSiteSlug(doc, prefix) {
  * querying the _sites endpoint.
  * @return {function}
  */
-function getSiteSlugMemoized() {
+function getSiteMemoized() {
   const cache = {};
 
   /**
@@ -185,7 +259,7 @@ function getSiteSlugMemoized() {
       }
     })
     .map((result) => {
-      cache[prefix] = result.slug;
+      cache[prefix] = result;
       return result;
     })
   }

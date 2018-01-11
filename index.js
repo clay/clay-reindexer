@@ -15,28 +15,71 @@ const {logResult, streamFetchJson, streamSearch, streamComponents, streamFetch} 
   handlers = getHandlers();
 
 function validateArgs() {
-  if (!args.site) throw new Error('You must specify a prefix');
-  if (!args.elasticHost) throw new Error('You must specify an elasticHost');
+  if (!args.site) throw new Error('You must specify "prefix"');
+  if (!args.elasticIndex) throw new Error('You must specify "elasticIndex"');
+  if (!args.elasticHost) throw new Error('You must specify "elasticHost"');
 }
 
 function processSite(prefix) {
   return streamDocs(prefix)
-    .tap(h.log)
-    .errors((err, push) => {
-      push(null, {error: err});
+    .through(putDocs)
+    .errors((error, push) => {
+      const resultObj = {error, status: 'error'};
+
+      if (error.pageUri) resultObj.pageUri = error.pageUri;
+      push(null, resultObj);
     })
-    .doto(logResult);
+    .tap(logResult());
 }
 
+/**
+ * Given a stream of Elastic documents, put those docs into the specified
+ * Elastic index.
+ * @param  {Stream} stream of docs (objects)
+ * @return {Stream} of indexing results of the form {id, status}, where id is
+ *                  Elastic doc ID and status is Elastic status code (e.g.
+ *                  "200")
+ */
+function putDocs(stream) {
+  const elasticIndex = args.elasticIndex;
 
+  return stream
+    .batch(1000)
+    .flatMap(docs => {
+      const body = docs.reduce((acc, doc, index) => {
+        acc.push({index: { _index: elasticIndex, _type: 'general', _id: doc.uri }});
+        acc.push(doc);
+        return acc;
+      }, [])
+
+      return h(client.bulk({body}))
+        .flatMap(results => h(results.items))
+        .map(resultItem => ({
+          id: resultItem.index._id,
+          status: resultItem.index.status === 200 ? 'success' : 'error'
+        }));
+    })
+}
+
+/**
+ * Stream the page URIs of the specified site.
+ * @param  {prefix} prefix e.g. 'http://localhost.thecut.com:3001'
+ * @return {Stream} of page URIs (strings)
+ */
 function streamDocs(prefix) {
   return streamFetchJson(`${prefix}/pages`)
     .flatten()
-    .filter(pageUri => pageUri === 'localhost.thecut.com/pages/cjc6meaub00007u1orw2s7rm2')
-    .flatMap(pageUri => processPage(prefix, pageUri));
+    .filter(pageUri => pageUri === 'localhost.thecut.com/pages/author')
+    .flatMap(pageUri => processPage(pageUri, prefix));
 }
 
-function processPage(prefix, pageUri) {
+/** 
+ * Generate an Elastic document from the specified pageUri.
+ * @param  {string} prefix
+ * @param  {string} pageUri
+ * @return {Stream} Elastic document (object)
+ */
+function processPage(pageUri, prefix) {
   const elasticDoc = {
     createdAt: null,
     title: null,
@@ -54,12 +97,16 @@ function processPage(prefix, pageUri) {
     siteSlug: null
   };
 
-  return h([elasticDoc])
+  return h.of(elasticDoc)
     .flatMap(doc => addSiteSlug(doc, prefix))
     .flatMap(doc => addPublishData(doc, prefix))
     .flatMap(doc => validatePublishUrl(doc, prefix))
     .flatMap(doc => addScheduleTime(doc, prefix))
-    .flatMap(doc => applyHandlersOnDoc(doc, prefix));
+    .flatMap(doc => applyHandlersOnDoc(doc, prefix))
+    .errors((err, push) => {
+      err.pageUri = pageUri;
+      push(err);
+    });
 }
 
 /**
@@ -72,6 +119,12 @@ function applyHandlersOnDoc(doc, prefix) {
   const composedUrl = getPageUrl(doc, prefix) + '.json';
 
   return streamFetchJson(composedUrl)
+    .errors((err, push) => {
+      if (err === errors.request404) {
+        return push(new Error(`Could not fetch composed JSON at ${composedUrl}`));
+      }
+      push(err);
+    })
     .flatMap(streamComponents)
     .flatMap(cmpt => applyHandlersOnCmpt(cmpt, prefix))
     .tap(subDoc => _.assign(doc, subDoc))
@@ -187,7 +240,7 @@ function addScheduleTime(doc, prefix) {
 function validatePublishUrl(doc, prefix) {
   let encoded, uriUrl;
   
-  if (!doc.url) return h([doc]);
+  if (!doc.url) return h.of(doc);
   encoded = Buffer.from(doc.url).toString('base64'),
   uriUrl = `${prefix}/uris/${encoded}`;
   return streamFetch(uriUrl)
@@ -200,7 +253,7 @@ function validatePublishUrl(doc, prefix) {
       doc.url = null;
       return doc;
     })
-    .errors((err, push) => {
+    .errors((err, push) => {c
       if (err === errors.request404) {
         doc.url = null;
         return push(null, doc);

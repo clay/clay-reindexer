@@ -27,7 +27,7 @@ function validateArgs(args) {
 function reindexSite({site, client, elasticIndex, handlers}) {
   return util.streamPageUris(site)
     .flatMap(pageUri => reindexUtil.pageToDoc(pageUri, site, handlers))
-    .through(reindexUtil.putDocs(client, elasticIndex));
+    .through(reindexUtil.putDocs(elasticIndex));
 }
 
 /**
@@ -69,6 +69,4 @@ if (runningAsScript) {
 
 // for testing
 module.exports.getHandlers = getHandlers;
-module.exports.pageToDoc = pageToDoc;
-module.exports.putDocs = putDocs;
 module.exports.reindexSite = reindexSite;

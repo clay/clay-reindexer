@@ -1,12 +1,11 @@
+'use strict';
+
 const util = require('./lib/util'),
   reindexUtil = require('./lib/reindex-util'),
-  docTransforms = require('./lib/doc-transforms'),
-  h = require('highland'),
   args = require('yargs').argv,
   fs = require('fs'),
   _ = require('lodash'),
   path = require('path'),
-  clayUtils = require('clayutils'),
   client = require('./lib/es-client'),
   runningAsScript = !module.parent;
 
@@ -16,7 +15,7 @@ function validateArgs(args) {
   if (!args.elasticHost) throw new Error('You must specify "elasticHost"');
 }
 
-/** 
+/**
  * Re-indexes the specified site.
  * @param  {string} options.site
  * @param  {Object} options.client
@@ -24,7 +23,7 @@ function validateArgs(args) {
  * @param  {Object} [options.handlers]
  * @return {Stream}
  */
-function reindexSite({site, client, elasticIndex, handlers}) {
+function reindexSite({site, elasticIndex, handlers}) {
   return util.streamPageUris(site)
     .flatMap(pageUri => reindexUtil.pageToDoc(pageUri, site, handlers))
     .through(reindexUtil.putDocs(elasticIndex));
@@ -32,7 +31,8 @@ function reindexSite({site, client, elasticIndex, handlers}) {
 
 /**
  * Retrieve all handlers.
- * @return {Object} mapping of component name to handler fnc
+ * @param  {string} dir directory relative to cwd where handlers are stored
+ * @return {Object} mapping cmpt name to handler fnc
  */
 function getHandlers(dir) {
   if (!dir) return {};
@@ -46,7 +46,7 @@ function getHandlers(dir) {
 }
 
 function init() {
-  const {site, elasticIndex} = args;
+  const {site, elasticIndex} = args,
     handlers = getHandlers(args.handlers);
 
   reindexSite({site, client, elasticIndex, handlers})

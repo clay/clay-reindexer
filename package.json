@@ -15,6 +15,7 @@
     "highland": "^2.11.1",
     "lodash": "^4.17.4",
     "node-fetch": "^1.7.3",
+    "require-directory": "^2.1.1",
     "traverse": "^0.6.6",
     "yargs": "^10.1.1"
   },

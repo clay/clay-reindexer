@@ -1,24 +1,9 @@
 'use strict';
 
-const util = require('./lib/util'),
-  reindexUtil = require('./lib/reindex-util'),
+const reindexSite = require('./lib/reindex-site'),
+  util = require('./lib/util'),
   getArgs = require('./lib/get-args'),
   runningAsScript = !module.parent;
-
-/**
- * Re-indexes the specified site.
- * @param  {Object} opts
- * @param  {string} opts.site
- * @param  {string} opts.elasticIndex
- * @param  {string} opts.elasticPrefix
- * @param  {Object} [opts.handlers]
- * @return {Stream}
- */
-function reindexSite(opts) {
-  return util.streamPageUris(opts.prefix)
-    .flatMap(pageUri => reindexUtil.pageToDoc(pageUri, opts))
-    .through(reindexUtil.putDocs(opts.elasticIndex, opts.elasticPrefix));
-}
 
 function init() {
   const opts = getArgs();

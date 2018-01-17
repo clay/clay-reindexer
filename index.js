@@ -35,4 +35,4 @@ function init() {
 }
 
 if (runningAsScript) init();
-module.exports.reindexSite = reindexSite;
+module.exports = reindexSite;

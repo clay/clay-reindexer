@@ -1,2 +1,3 @@
 --recursive
 lib/**/*.test.js
+index.test.js

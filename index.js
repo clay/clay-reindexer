@@ -2,21 +2,8 @@
 
 const util = require('./lib/util'),
   reindexUtil = require('./lib/reindex-util'),
-  args = require('yargs').argv,
-  requireDirectory = require('require-directory'),
+  getArgs = require('./lib/get-args'),
   runningAsScript = !module.parent;
-
-/**
- * Confirm command-line args include all mandatory args.
- * @param  {Object} args
- * @return {Object} args
- */
-function validateArgs(args) {
-  if (!args.site) throw new Error('You must specify "site"');
-  if (!args.elasticIndex) throw new Error('You must specify "elasticIndex"');
-  if (!args.elasticHost) throw new Error('You must specify "elasticHost"');
-  return args;
-}
 
 /**
  * Re-indexes the specified site.
@@ -33,23 +20,10 @@ function reindexSite(opts) {
     .through(reindexUtil.putDocs(opts.elasticIndex, opts.elasticPrefix));
 }
 
-/**
- * Convert command-line args into programmatic options.
- * @param  {Object} args
- * @return {Object}
- */
-function parseArgs(args) {
-  return {
-    prefix: args.site,
-    elasticIndex: args.elasticIndex,
-    elasticPrefix: args.elasticPrefix,
-    handlers: args.handlers &&
-      requireDirectory(module, args.handlers, {recurse: false})
-  };
-}
-
 function init() {
-  reindexSite(parseArgs(args))
+  const opts = getArgs();
+
+  reindexSite(opts)
     .errors((error, push) => {
       const resultObj = {error, status: 'error'};
 
@@ -60,10 +34,5 @@ function init() {
     .done(process.exit);
 }
 
-if (runningAsScript) {
-  validateArgs(args);
-  init();
-}
-
-// for testing
+if (runningAsScript) init();
 module.exports.reindexSite = reindexSite;

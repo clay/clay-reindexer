@@ -23,9 +23,9 @@ npm install
 
 * **site**: String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`
 * **elasticHost**: String. Required. URL to Elastic Host root, e.g. `http://localhost:9200`.
-* **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" section below.
 * **elasticIndex**: String. Required. Name of index to store new page docs.
-* **elasticPrefix**: String. Optional.
+* **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" section below.
+* **elasticPrefix**: String. Optional. Name of the prefix of your Elastic indices.
 
 ## Handlers
 

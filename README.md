@@ -2,7 +2,6 @@
 
 Populate a specified Elastic index with your page data.
 
-
 ## Example usage
 
 The following command populates the local `zar` index with the pages inside the `http://foo.bar` site, applying the handlers in the folder `myhandlers`.
@@ -34,9 +33,9 @@ Handlers allow you to populate fields of a page's Elastic doc based on component
 Each file in the handlers folder:
 
 * Should have a name matching a component name, e.g. `clay-paragraph.js`.
-* Should export a function that return, streams, or a returns a Promise that resolves with an object that will be assigned to the Elastic document.
+* Should export a function that return, streams, or a returns a Promise that resolves with an object. This object will be merged into the Elastic document.
 
-This exported function has a signature of `ref`, `data`, `site`, reflecting the URI of the component being processed, the component's data, and the `site` object, which reflects the data stored in the `sites` index.
+This exported function has a signature of `ref`, `data`, `site`, reflecting the URI of the component being processed, the component's data, and the `site` object `{name, slug, host, path, port, assetDir, assetPath, mediaPath, siteIcon}`.
 
 ### Example
 

@@ -15,7 +15,6 @@ function validateArgs(args) {
   if (!args.site) throw new Error('You must specify "site"');
   if (!args.elasticIndex) throw new Error('You must specify "elasticIndex"');
   if (!args.elasticHost) throw new Error('You must specify "elasticHost"');
-  if (!args.elasticPrefix) throw new Error('You must specify "elasticPrefix"');
   return args;
 }
 
@@ -31,7 +30,7 @@ function validateArgs(args) {
 function reindexSite(opts) {
   return util.streamPageUris(opts.prefix)
     .flatMap(pageUri => reindexUtil.pageToDoc(pageUri, opts))
-    .through(reindexUtil.putDocs(opts.elasticIndex));
+    .through(reindexUtil.putDocs(opts.elasticIndex, opts.elasticPrefix));
 }
 
 /**
@@ -58,7 +57,7 @@ function init() {
       push(null, resultObj);
     })
     .tap(util.logResult())
-    .done(() => process.exit());
+    .done(process.exit);
 }
 
 if (runningAsScript) {

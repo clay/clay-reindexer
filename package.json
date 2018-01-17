@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "eslint index.js lib/* && nyc --reporter=text --reporter=text-summary mocha",
     "lint": "eslint ."
   },
   "author": "",
@@ -25,6 +25,7 @@
     "eslint": "^4.15.0",
     "mocha": "^4.1.0",
     "mock-require": "^3.0.1",
+    "nyc": "^11.4.1",
     "sinon": "^4.1.4"
   }
 }

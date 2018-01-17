@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "eslint index.js lib/* && nyc --reporter=text --reporter=text-summary mocha",
+    "report": "echo 'Generating HTML code coverage report' && nyc --reporter=lcov --reporter=text-summary mocha",
     "lint": "eslint ."
   },
   "author": "",

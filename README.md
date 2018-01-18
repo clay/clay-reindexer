@@ -35,7 +35,7 @@ Each file in the handlers folder:
 * Should have a name matching a component name, e.g. `clay-paragraph.js`.
 * Should export a function that return, streams, or a returns a Promise that resolves with an object. This object will be merged into the Elastic document.
 
-This exported function has a signature of `ref`, `data`, `site`, reflecting the URI of the component being processed, the component's data, and the `site` object `{name, slug, host, path, port, assetDir, assetPath, mediaPath, siteIcon}`.
+This exported function has a signature of `ref`, `data`, `opts`, reflecting the URI of the component being processed, the component's data, and an object containing all opts passed to the command, _plus_ the site object `{name, slug, host, path, port, assetDir, assetPath, mediaPath, siteIcon}`.
 
 ### Example
 
@@ -43,7 +43,7 @@ The following handler will set the `title` property of any page with an `article
 
 ```
 // myhandlers/article.js
-module.exports = (ref, data, site) => {
+module.exports = (ref, data, opts) => {
     return {title: data.headline};
 })
 ```

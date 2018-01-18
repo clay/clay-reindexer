@@ -25,6 +25,7 @@ npm install
 * **elasticIndex**: String. Required. Name of index to store new page docs.
 * **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" section below.
 * **elasticPrefix**: String. Optional. Name of the prefix of your Elastic indices.
+* **batch**: Max number of documents to PUT into Elastic in one request.
 
 ## Handlers
 

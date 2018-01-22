@@ -76,7 +76,7 @@ The following handler will set the `title` property of any page with an `article
 module.exports = (ref, data) => ({title: data.headline});
 ```
 
-### Built-in Transforms
+## Built-in Transforms
 
 Built-in transforms populate these fields automatically:
 

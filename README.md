@@ -25,6 +25,7 @@ npm install
 * **elasticIndex**: String. Required. Name of index to store new page docs.
 * **elasticPrefix**: String. Optional. Name of the prefix of your Elastic indices.
 * **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" below.
+* **limit**: Number. Optional. Limit the number of pages processed.
 * **prefix**: String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`.
 * **transforms**: String. Optional. Path to directory containing transforms. See "Transforms" below.
 

@@ -50,7 +50,6 @@ Note: The order of transform processing is not guaranteed.
 module.exports = doc => ({foo: 'bar'});
 ```
 
-
 ## Handlers
 
 Handlers allow you to populate fields of a page's Elastic doc based on components within the page.
@@ -66,7 +65,7 @@ Each handler function has this signature:
 * `data`: Object. Component instance data (does not have `_ref`)
 * `context`: Object. Contains all opts passed to the general command. It also includes a `site` object.
 
-Note: The order of handler processing is not guaranteed.
+Handlers are applied after custom transforms. The order of handler processing is not guaranteed.
 
 ### Example
 

@@ -80,8 +80,9 @@ module.exports = (ref, data) => ({title: data.headline});
 
 Built-in transforms populate these fields automatically:
 
-* published
-* url
-* scheduled
-* scheduledTime
-* siteSlug
+* published: true if published version of page exists
+* publishTime: inferred from `lastModified` of published page
+* url: inferred from `url` of published page
+* scheduled: inferred from presence of page in site schedule
+* scheduledTime: inferred from site schedule
+* siteSlug: inferred from `prefix` option

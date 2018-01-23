@@ -12,11 +12,15 @@ node index.js --prefix http://foo.bar --elasticHost http://localhost:9200 --elas
 
 ## Installation
 
+Cli installation:
+
 ```
 git clone https://github.com/nymag/page-reindexer
 cd page-reindexer
-npm install
+npm install -g
 ```
+
+The `clayReindex` command will now be available.
 
 ## Options
 
@@ -85,4 +89,4 @@ Built-in transforms populate these fields automatically:
 * url: inferred from `url` of published page
 * scheduled: inferred from presence of page in site schedule
 * scheduledTime: inferred from site schedule
-* siteSlug: inferred from `prefix` option
+* siteSlug: inferred from sit 

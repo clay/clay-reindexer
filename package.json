@@ -8,6 +8,9 @@
     "report": "echo 'Generating HTML code coverage report' && nyc --reporter=lcov --reporter=text-summary mocha",
     "lint": "eslint ."
   },
+  "bin": {
+    "clayReindex": "./index.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {

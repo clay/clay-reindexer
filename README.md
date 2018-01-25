@@ -32,6 +32,15 @@ The `clayReindex` command will now be available.
 * **limit**: Number. Optional. Limit the number of pages processed.
 * **prefix**: String. Required. URL prefix of the Clay site you want to reindex, e.g. `http://foo.com`.
 * **transforms**: String. Optional. Path to directory containing transforms. See "Transforms" below.
+* **x-forwarded-host**: String. X-forwared-host header to include in every request to Amphora. Useful if you want to pass an IP as a `prefix`.
+
+## Context object
+
+The context object is passed to each transform and handler. It includes data about the current site reindexing. It is similar to the options argument, except:
+
+* **handlers** is an object mapping cmpt name to handler fnc, not a string
+* **fetchOpts** is an object describing node-fetch opts sent with every Amphora request. It is derived from the `x-forwarded-host` option.
+
 
 ## Transforms
 
@@ -42,7 +51,7 @@ Each file in the transforms folder should export a function that returns, stream
 Each transform function has this signature:
 
 * `doc`: Object. The Elastic doc generated _so_ far. All custom transforms occur after all built-in transforms. See "Built-in Transforms", below.
-* `context`: Object. Contains all opts passed to the general command. It also includes a `site` object.
+* `context`: Object. See "Context Object."
 
 Note: The order of transform processing is not guaranteed.
 
@@ -67,7 +76,7 @@ Each handler function has this signature:
 
 * `ref`: String. Uri of component instance
 * `data`: Object. Component instance data (does not have `_ref`)
-* `context`: Object. Contains all opts passed to the general command. It also includes a `site` object.
+* `context`: Object. See "Context Object."
 
 Handlers are applied after custom transforms. The order of handler processing is not guaranteed.
 

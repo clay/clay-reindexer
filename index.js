@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const reindexSite = require('./lib/reindex-site'),
+const reindexSites = require('./lib/reindex-sites'),
   util = require('./lib/util'),
   getArgs = require('./lib/get-args'),
   runningAsScript = !module.parent;
@@ -9,7 +9,7 @@ const reindexSite = require('./lib/reindex-site'),
 function init() {
   const opts = getArgs();
 
-  reindexSite(opts)
+  reindexSites(opts)
     .errors((error, push) => {
       const resultObj = {error, status: 'error'};
 
@@ -21,4 +21,4 @@ function init() {
 }
 
 if (runningAsScript) init();
-module.exports = reindexSite;
+module.exports = reindexSites;

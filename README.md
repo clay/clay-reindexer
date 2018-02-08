@@ -1,14 +1,6 @@
-# Page Re-indexer
+# clay-reindex
 
-Populate a specified Elastic index with your page data.
-
-## Example usage
-
-The following command populates the local `zar` index with the pages inside the `http://foo.bar` site, applying the handlers in the folder `myhandlers`.
-
-```
-node index.js --prefix http://foo.bar --elasticHost http://localhost:9200 --elasticIndex zar --handlers myhandlers --transforms mytransforms
-```
+Build or update Elastic indices from Amphora or arbitrary data.
 
 ## Installation
 
@@ -22,47 +14,71 @@ npm install -g
 
 The `clayReindex` command will now be available.
 
-## Options
+## Overview
+
+Clay-reindex is a command line and programmatic utility for building or updating Elastic documents in bulk. It:
+
+1. Reads data from a source, e.g. a list of page URIs
+2. Transforms each datum into an Elastic doc using built-in or user-defined transform functions
+3. Inserts each resulting document into a specified Elastic index
+
+## Example uses
+
+Pass every line in `my-uris.txt` into each `transform` function and PUT the merged results into elastic index `foo` at elastic host `http://localhost:9200`:
+
+```
+clayReindex --elasticHost http://localhost:9200 --elasticIndex foo --transforms mytransforms < my-uris.txt
+```
+
+Populates the local `foo` index with all pages in all sites, using built-in logic to infer some page document properties from Amphora data:
+
+```
+clayReindex pages --amphoraHost http://localhost:3001 --elasticHost http://localhost:9200 --elasticIndex foo --handlers myhandlers --transforms mytransforms
+```
+
+Do the same thing but only process the URIs inside `my-uris.txt`:
+
+```
+clayReindex pages --amphoraHost http://localhost:3001 --elasticHost http://localhost:9200 --elasticIndex zar --handlers myhandlers --transforms mytransforms < my-uris.txt
+```
+
+## General use (no subcommands)
+
+When no subcommand is specified, clayReindex simply processes data from `stdin`, transforms it, and upserts it into the specified index.
+
+### Options
 
 * **batch**: Max number of documents to PUT into Elastic in one request.
 * **elasticHost**: String. Required. URL to Elastic Host root, e.g. `http://localhost:9200`.
 * **elasticIndex**: String. Required. Name of index to store new page docs.
 * **elasticPrefix**: String. Optional. Name of the prefix of your Elastic indices.
-* **handlers**: String. Optional. Path to directory containing handlers. See "Handlers" below.
 * **limit**: Number. Optional. Limit the number of pages processed per site.
 * **prefix**: String. Required. Clay IP or domain of any of its sites.
 * **transforms**: String. Optional. Path to directory containing transforms. See "Transforms" below.
+* **verbose**: Boolean. Optional. Log all HTTP requests.
 
-## Context object
+## Pages subcommand
 
-The context object is passed to each transform and handler. It includes data about the current site reindexing. It is similar to the options argument, except:
+The pages subcommand makes it easier to re-index the built-in `pages` index provided by amphora-search. Using the subcommand specifies `clayReindex` in two ways:
 
-* **handlers** is an object mapping cmpt name to handler fnc, not a string
-* **fetchOpts** is an object describing node-fetch opts sent with every Amphora request. It is derived from the `x-forwarded-host` option.
+* It automatically process all page URIs, unless it detects data in `stdin`.
+* It automatically generates partial documents using built-in logic that applies before user-specified transforms. This logic generates the following page document properties:
+    * `published`: `true` if published version of page exists
+    * `publishTime`: inferred from `lastModified` of published page
+    * `url`: inferred from `url` of published page
+    * `scheduled`: inferred from presence of page in site schedule
+    * `scheduledTime`: inferred from site schedule
+    * `siteSlug`: inferred from site slug as it apperas in the `sites` index
 
+### Options
 
-## Transforms
+In addition to the generic options described above, the `pages` subcommand provides these options:
 
-Transforms allow you to describe your own logic for populating the fields of a page's Elastic document.
+* `amphoraHost`: String. Required. URL from which to retrieve Amphora data. The command automatically appends site paths and `x-forwarded-host` headers, so this could be the IP of your Clay server or simply the domain of any of your Clay sites.
+* `handlers` String. Optional. Path to directory with handler functions. See "Handlers" section below.
+* `limit` Number. Optional. Limit number of URIs in input that are processed.
 
-Each file in the transforms folder should export a function that returns, streams, or resolves an object.
-
-Each transform function has this signature:
-
-* `doc`: Object. The Elastic doc generated _so_ far. All custom transforms occur after all built-in transforms. See "Built-in Transforms", below.
-* `context`: Object. See "Context Object."
-
-Note: The order of transform processing is not guaranteed.
-
-### Example
-
-```
-// mytransforms/example.js
-// Sets `foo` to `bar` on every document processed.
-module.exports = doc => ({foo: 'bar'});
-```
-
-## Handlers
+### Handlers
 
 Handlers allow you to populate fields of a page's Elastic doc based on components within the page.
 
@@ -77,24 +93,17 @@ Each handler function has this signature:
 * `data`: Object. Component instance data (does not have `_ref`)
 * `context`: Object. See "Context Object."
 
-Handlers are applied after custom transforms. The order of handler processing is not guaranteed.
+Handlers are applied _after_ custom transforms. The order of handler processing is not guaranteed.
 
-### Example
+## Transforms
 
-The following handler will set the `title` property of any page with an `article` component to the `headline` of its article:
+Transforms allow you to describe your own logic for populating the fields of a page's Elastic document.
 
-```
-// myhandlers/article.js
-module.exports = (ref, data) => ({title: data.headline});
-```
+Each file in the transforms folder should export a function that returns, streams, or resolves an object.
 
-## Built-in Transforms
+Each transform function has this signature:
 
-Built-in transforms populate these fields automatically:
+* `uri`: This is the input of the reindexing process.
+* `doc`: Object. The Elastic doc generated _so_ far.
 
-* published: true if published version of page exists
-* publishTime: inferred from `lastModified` of published page
-* url: inferred from `url` of published page
-* scheduled: inferred from presence of page in site schedule
-* scheduledTime: inferred from site schedule
-* siteSlug: inferred from sit 
+Note: The order of transform processing is not guaranteed.

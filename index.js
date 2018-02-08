@@ -1,24 +1,45 @@
 #!/usr/bin/env node
 'use strict';
 
-const reindexSites = require('./lib/reindex-sites'),
-  util = require('./lib/util'),
-  getArgs = require('./lib/get-args'),
+const util = require('./lib/util'),
+  api = require('./lib/api'),
+  args = require('./lib/args'),
   runningAsScript = !module.parent;
 
-function init() {
-  const opts = getArgs();
+require('dotenv').config();
 
-  reindexSites(opts)
-    .errors((error, push) => {
-      const resultObj = {error, status: 'error'};
-
-      if (error.pageUri) resultObj.pageUri = error.pageUri;
-      push(null, resultObj);
-    })
+function initCmd() {
+  return getOperationStream()
+    .errors(streamErrors)
     .tap(util.logResult())
     .done(process.exit);
 }
 
-if (runningAsScript) init();
-module.exports = reindexSites;
+function streamErrors(error, push) {
+  const resultObj = {error, status: 'error'};
+
+  if (error.pageUri) resultObj.pageUri = error.pageUri;
+  push(null, resultObj);
+}
+
+function getOperationStream() {
+  switch (args._[0]) {
+    case 'pages':
+      return util.readStdin()
+        .otherwise(() => {
+          return util.streamAllPageUris();
+        })
+        .through(uriStream =>
+          api.reindexPages(uriStream, args.elasticIndex, args)
+        );
+    default:
+      return util.readStdin()
+        .through(uriStream => api.reindex(uriStream, args.elasticIndex, args));
+  }
+}
+
+if (runningAsScript) {
+  initCmd();
+} else {
+  module.exports = api;
+}

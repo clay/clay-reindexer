@@ -1,6 +1,6 @@
 {
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": 7,
     "ecmaFeatures": {
       "arrowFunctions": true,
       "blockBindings": true,
@@ -12,7 +12,9 @@
       "binaryLiterals": true,
       "templateStrings": true,
       "generators": true,
-      "modules": false
+      "modules": false,
+      "destructuring": true,
+      "spread": true
     }
   },
   "env": {

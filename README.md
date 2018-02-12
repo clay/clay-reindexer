@@ -1,4 +1,4 @@
-# Page Re-indexer
+# Clay Re-indexer
 
 Populate a specified Elastic index with your page data.
 

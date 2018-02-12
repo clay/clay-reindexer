@@ -15,8 +15,8 @@ node index.js --prefix http://foo.bar --elasticHost http://localhost:9200 --elas
 Cli installation:
 
 ```
-git clone https://github.com/nymag/page-reindexer
-cd page-reindexer
+git clone https://github.com/nymag/clay-reindexer
+cd clay-reindexer
 npm install -g
 ```
 

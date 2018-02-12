@@ -7,8 +7,8 @@ Build or update Elastic indices from Amphora or arbitrary data.
 Cli installation:
 
 ```
-git clone https://github.com/nymag/page-reindexer
-cd page-reindexer
+git clone https://github.com/nymag/clay-reindexer
+cd clay-reindexer
 npm install -g
 ```
 

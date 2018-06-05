@@ -26,9 +26,7 @@ function getOperationStream() {
   switch (args._[0]) {
     case 'pages':
       return util.readStdin()
-        .otherwise(() => {
-          return util.streamAllPageUris();
-        })
+        .otherwise(() => util.streamAllPageUris())
         .through(uriStream =>
           api.reindexPages(uriStream, args.elasticIndex, args)
         );

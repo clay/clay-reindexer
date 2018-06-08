@@ -20,38 +20,37 @@ Clay-reindex is a command line and programmatic utility for building or updating
 
 1. Reads data from a source, e.g. a list of page URIs
 2. Transforms each datum into an Elastic doc using built-in or user-defined transform functions
-3. Inserts each resulting document into a specified Elastic index
+3. Stream out documents that can be piped into [elasticsearch-streamer](https://www.npmjs.com/package/elasticsearch-streamer)
 
 ## Example uses
 
 Pass every line in `my-uris.txt` into each `transform` function and PUT the merged results into elastic index `foo` at elastic host `http://localhost:9200`:
 
 ```
-clayReindex --elasticHost http://localhost:9200 --elasticIndex foo --transforms mytransforms < my-uris.txt
+clayReindex --elasticHost http://localhost:9200 --transforms mytransforms < my-uris.txt | ess put http://localhost:9200
 ```
 
 Populates the local `foo` index with all pages in all sites, using built-in logic to infer some page document properties from Amphora data:
 
 ```
-clayReindex pages --amphoraHost http://localhost:3001 --elasticHost http://localhost:9200 --elasticIndex foo --handlers myhandlers --transforms mytransforms
+clayReindex pages --amphoraHost http://localhost:3001 --handlers myhandlers --transforms mytransforms | ess put http://localhost:9200/foo
 ```
+
+Hint: If you want to upsert instead, use `ess upsert`.
 
 Do the same thing but only process the URIs inside `my-uris.txt`:
 
 ```
-clayReindex pages --amphoraHost http://localhost:3001 --elasticHost http://localhost:9200 --elasticIndex zar --handlers myhandlers --transforms mytransforms < my-uris.txt
+clayReindex pages --amphoraHost http://localhost:3001 --handlers myhandlers --transforms mytransforms < my-uris.txt | ess put http://localhost:9200/foo
 ```
 
-## General use (no subcommands)
+## General use (no subcommand)
 
 When no subcommand is specified, clayReindex simply processes data from `stdin`, transforms it, and upserts it into the specified index.
 
 ### Options
 
 * **batch**: Max number of documents to PUT into Elastic in one request.
-* **elasticHost**: String. Required. URL to Elastic Host root, e.g. `http://localhost:9200`.
-* **elasticIndex**: String. Required. Name of index to store new page docs.
-* **elasticPrefix**: String. Optional. Name of the prefix of your Elastic indices.
 * **limit**: Number. Optional. Limit the number of pages processed per site.
 * **prefix**: String. Required. Clay IP or domain of any of its sites.
 * **transforms**: String. Optional. Path to directory containing transforms. See "Transforms" below.
@@ -68,7 +67,7 @@ The pages subcommand makes it easier to re-index the built-in `pages` index prov
     * `url`: inferred from `url` of published page
     * `scheduled`: inferred from presence of page in site schedule
     * `scheduledTime`: inferred from site schedule
-    * `siteSlug`: inferred from site slug as it apperas in the `sites` index
+    * `siteSlug`: inferred from site slug as it appears in the `sites` index
 
 ### Options
 
